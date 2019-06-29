@@ -159,7 +159,7 @@ def get_input_optimizer(input_img):
         return optimizer
 
 def run_style_transfer(cnn, normalization_mean, normalization_std,
-                        content_img, style_img, input_img, num_steps=500,
+                        content_img, style_img, input_img, num_steps=50,
                         style_weight=100000, content_weight=1):
         """Run the style transfer."""
         print('Building the style transfer model..')
@@ -196,7 +196,7 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
                 loss.backward()
 
                 run[0] += 1
-                if run[0] % 50 == 0:
+                if run[0] % 5 == 0:
                     print("run {}:".format(run))
                     print('Style Loss : {:4f} Content Loss: {:4f}'.format(
                         style_score.item(), content_score.item()))
@@ -216,7 +216,7 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
 def get_imgs(f1,f2,user):
 
-    imsize = 120  
+    imsize = 400
 
     loader = transforms.Compose([
         transforms.Resize(imsize),  # нормируем размер изображения
@@ -248,5 +248,7 @@ def get_output(f1,f2,user):
    # imshow(input_img, title='Input Image')
     output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
                                 content_img, style_img, input_img)
-    a = output.detach().numpy().squeeze(0).T
+    a = output.detach().numpy().squeeze(0).transpose((1,2,0))
+#   print(a.shape)
+#   print(a.T.shape)
     plt.imsave(user +'/output.png',a)

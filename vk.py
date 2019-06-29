@@ -1,4 +1,4 @@
-from model import StyleTransferModel
+#from trans import StyleTransferModel
 from vk_api import VkUpload
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
@@ -9,26 +9,32 @@ from os.path import isfile, join
 import urllib.request
 from trans import *
 import requests
-model = StyleTransferModel()
+#model = StyleTransferModel()
 
 
 def main():
-    #token for group
-    #token=''
-   # login= ''
-   # passw = ''
 
 
-#    api_group = vk.get_api()
     session = requests.Session()
-    vk = vk_api.VkApi(login,passw,token='another_token')
 
-   
+    vk = vk_api.VkApi('login','passw',token='token')
+
+# this token is for group
+    token = 'token'
+
+
+
+#    vk = vk_api.VkApi(token=token)
     vk_session = vk_api.VkApi(token=token)
+   # upload = VkUpload(vk)
+    image_url = ['1.jpg']
+
     upload = VkUpload(vk)
 
-    api = vk.get_api()   
-    api_group = vk_session.get_api()   
+    print('ok')
+
+    api = vk.get_api()
+    api_group = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
@@ -40,7 +46,16 @@ def main():
             try:
                 photo = attach['attach1']
             except:
-                message = 'ЧТо-то не так'
+                api_group.messages.send(
+                user_id=event.user_id,
+
+                message='ВЫ не приложили фото',
+                random_id = random_id
+            )
+                continue
+
+                
+            print(photo)
 
             # let's create new folder if it doesn't exist
             path = photo.split('_')[0]
@@ -65,6 +80,16 @@ def main():
             # getting list of files
             onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
             new_number = len(onlyfiles)
+            if new_number < 2:
+                api_group.messages.send(
+                user_id=event.user_id,
+                
+                message='НЕобходимо, чтобы в истории было больше 2 фото',
+                random_id = random_id
+            )
+                continue
+
+                
 
             # let's save the photo into directory
             urllib.request.urlretrieve(url_photo, path+'/{}.jpg'.format(new_number+1))
@@ -75,9 +100,14 @@ def main():
 
             # so now our goal is to return the result
             # firstly, let's get two numpy arrays of photos
-
-            f1 = onlyfiles[0]
-            f2 = onlyfiles[1]
+            print(onlyfiles)
+            try:
+                onlyfiles.remove('output.png')
+            except:
+                continue
+            #f1 = '42.jpg'
+            #f2 = '41.jpg'
+            m = max([int(el.replace('.jpg','')) for el in onlyfiles])
             print(f1,f2)
 
 #            from trans import *
@@ -86,22 +116,30 @@ def main():
 
 
 
-            image_url = 'http://localhost:8888/view/style_transer/22147487/output.png'
+#            image_url = 'http://localhost:8888/view/style_transer/22147487/output.png'
+
+            image_url = '{}/output.png'.format(event.user_id)
+
+            upload = VkUpload(vk)
+
+# I can't upload photo :(
+         #   print(upload.photo_messages(photos=image_url))
+            photo = upload.photo_messages(photos=image_url)[0]
+            attachments = []
+           # attachments.append(
+           #     'photo{}_{}'.format(photo['owner_id'], photo['id'])
+           # )
+            message = photo['sizes'][-1]['url']
+            #image = session.get(image_url, stream=True)
 
 
-            image = session.get(image_url, stream=True)
 
-
-
-            # I can't upload photo :(
-            photo = upload.photo_messages(photos=image.raw)[0]
-            attachments.append(
-                'photo{}_{}'.format(photo['owner_id'], photo['id'])
-            )
-            vk.messages.send(
+        
+            api_group.messages.send(
                 user_id=event.user_id,
                 attachment=','.join(attachments),
-                message='Ваш текст'
+                message=message,
+                random_id = random_id
             )
             continue
 
